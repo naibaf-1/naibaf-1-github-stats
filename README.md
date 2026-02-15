@@ -7,6 +7,9 @@ Modify the list `owners`.
 ## Add a new language
 Add a new entry to the Map `displayedLanguages` and don't exclude the new language in line 104 of `languageStats.java`.
 
+## Customize the color of a language
+Add a new entry to the Map `languageColor`.
+
 ## Exclude a repository
 Add a new entry to the List `excludedRepos`.
 
