@@ -26,13 +26,23 @@ public class languageStats {
             Map.entry(".h", "C")
         );
 
+        // Colors of the languages
+        Map<String, String> languageColor = Map.of(
+            "Dart", "#00B4AB",
+            "Java", "#b07219",
+            "C", "#555555"
+        );
+
         // JSON structure which will be transmitted
-        String chartJson = """
+        String chartJSON = """
         {
             "type": "pie",
             "data": {
                 "labels": %s,
-                "datasets": [{ "data": %s }]
+                "datasets": [{
+                    "data": %s,
+                    "backgroundColor": %s
+                }]
             }
         }
         """;
@@ -134,13 +144,16 @@ public class languageStats {
         Files.writeString(Path.of("languageStats.json"), jsonOut.toString());
 
         // Convert labels to a JSON array
-        String labelsJson = languageCount.keySet().stream().map(s -> "\"" + s + "\"").reduce((a, b) -> a + "," + b).map(s -> "[" + s + "]").orElse("[]");
+        String labelsJSON = languageCount.keySet().stream().map(s -> "\"" + s + "\"").reduce((a, b) -> a + "," + b).map(s -> "[" + s + "]").orElse("[]");
 
         // Convert values to a JSON array
-        String valuesJson = languageCount.values().stream().map(Object::toString).reduce((a, b) -> a + "," + b).map(s -> "[" + s + "]").orElse("[]");
+        String valuesJSON = languageCount.values().stream().map(Object::toString).reduce((a, b) -> a + "," + b).map(s -> "[" + s + "]").orElse("[]");
+
+        // Convert colors to a JSON array
+        String colorsJSON = languageCount.keySet().stream().map(lang -> "\"" + languageColor.get(lang) + "\"").reduce((a, b) -> a + "," + b).map(s -> "[" + s + "]").orElse("[]");
 
         // Create a JSON String for the chart and remove whitespace and spaces from it
-        String compactDataJson = chartJson.formatted(labelsJson, valuesJson).replace("\n", "").replace("\r", "").replace(" ", "");
+        String compactDataJson = chartJSON.formatted(labelsJSON, valuesJSON, colorsJSON).replace("\n", "").replace("\r", "").replace(" ", "");
 
         // Create the request for the chart using the JSON String
         HttpRequest req = HttpRequest.newBuilder()
