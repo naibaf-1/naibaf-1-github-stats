@@ -1,0 +1,168 @@
+import java.nio.file.*;
+import java.util.*;
+import java.net.http.*;
+import java.net.URI;
+
+public class languageStats {
+
+    public static void main(String[] args) throws Exception {
+        String currentRepo = Path.of("").toAbsolutePath().getFileName().toString();
+        System.out.println("Current repo: " + currentRepo);
+
+        // Generate /repos
+        Files.createDirectories(Path.of("repos"));
+
+        // Request all repositories of the user and CodeJudgeOrg
+        List<String> owners = List.of("naibaf-1", "CodeJudgeOrg");
+
+        List<String> repoNames = new ArrayList<>();
+        List<String> repoUrls = new ArrayList<>();
+
+        // Repos to exclude
+        List<String> exclude = List.of("HexPatch");
+
+        // Fill the two lists with the name and the url of a repository for all owners
+        for (String owner : owners) {
+            // Request all repositories of an owner
+            Process process = new ProcessBuilder("gh", "repo", "list", owner, "--json", "name,sshUrl", "--limit", "200")
+                    .redirectErrorStream(true)
+                    .start();
+            String json = new String(process.getInputStream().readAllBytes());
+            process.waitFor();
+
+            // Fill the two lists with the name and the url of an repository
+            for (String entry : json.split("\\{")) {
+                if (entry.contains("sshUrl")) {
+                    String name = entry.split("\"name\":\"")[1].split("\"")[0];
+                    String url = entry.split("\"sshUrl\":\"")[1].split("\"")[0];
+                    repoNames.add(name);
+                    repoUrls.add(url);
+                }
+            }
+        }
+
+        // Move through each repository and count the occurrences of the file extensions
+        Map<String, Integer> extensionCount = new HashMap<>();
+        int repoCount = repoNames.size();
+
+        for (int i = 0; i < repoCount; i++) {
+            String name = repoNames.get(i);
+
+            // Skip the repo that contains this script 
+            if (name.equals(currentRepo)) {
+                continue;
+            }
+
+            // Skip excluded repos
+            if (exclude.contains(name)) {
+                continue;
+            }
+
+            String url = repoUrls.get(i).replace("git@github.com:", "https://github.com/");
+            String path = "repos/" + name;
+
+            // Clone the repository
+            Process clone = new ProcessBuilder("git", "clone", "--depth", "1", "--recursive", url, path).start();
+            clone.waitFor();
+
+            // Skip if the clone failed
+            if (!Files.exists(Path.of(path))) {
+                System.out.println("Skipping " + name + " (clone failed)");
+                continue;
+            }
+
+            // Count the files with the same extension for each repository
+            try (var stream = Files.walk(Path.of(path))) {
+                stream.filter(Files::isRegularFile).forEach(f -> {
+                    String extension = getExtension(f.toString());
+
+                    // Only count Java, C, Dart
+                    if (!extension.equals(".java") && !extension.equals(".dart") && !extension.equals(".c") && !extension.equals(".h")) {
+                        return; // ignore everything else
+                    }
+
+                    // Find the extension key in the Map => Add 1 to the value
+                    extensionCount.merge(extension, 1, Integer::sum);
+                });
+            }
+        }
+
+        // Map of supported languages
+        Map<String, String> displayedLanguages = Map.ofEntries(
+            Map.entry(".dart", "Dart"),
+            Map.entry(".java", "Java"),
+            Map.entry(".c", "C"),
+            Map.entry(".h", "C")
+        );
+
+        // Get a Map with the name of the languages instead of the extensions
+        Map<String, Integer> languageCount = new LinkedHashMap<>();
+        for (var extension : extensionCount.entrySet()) {
+            String language = displayedLanguages.get(extension.getKey());
+            if (language != null) {
+                languageCount.merge(language, extension.getValue(), Integer::sum);
+            }
+        }
+
+        // Convert languageCount to a JSON String
+        StringBuilder jsonOut = new StringBuilder("{");
+        boolean first = true;
+        for (var extension : languageCount.entrySet()) {
+            if (!first) jsonOut.append(",");
+            first = false;
+            jsonOut.append("\"").append(extension.getKey()).append("\":").append(extension.getValue());
+        }
+        jsonOut.append("}");
+
+        // Save the JSON String into a file
+        Files.writeString(Path.of("languageStats.json"), jsonOut.toString());
+
+        // Convert labels to a JSON array
+        String labelsJson = languageCount.keySet().stream()
+                .map(s -> "\"" + s + "\"")
+                .reduce((a, b) -> a + "," + b)
+                .map(s -> "[" + s + "]")
+                .orElse("[]");
+
+        // Convert values to a JSON array
+        String valuesJson = languageCount.values().stream()
+                .map(Object::toString)
+                .reduce((a, b) -> a + "," + b)
+                .map(s -> "[" + s + "]")
+                .orElse("[]");
+
+        // Create a JSON String for the chart
+        String chartJson = """
+        {
+            "type": "pie",
+            "data": {
+                "labels": %s,
+                "datasets": [{ "data": %s }]
+            }
+        }
+        """.formatted(labelsJson, valuesJson);
+
+        // Remove whitespace and spaces from the JSON
+        String compactChartJson = chartJson.replace("\n", "").replace("\r", "").replace(" ", "");
+
+        // Create the request for the chart using the JSON String
+        HttpRequest req = HttpRequest.newBuilder()
+            .uri(URI.create("https://quickchart.io/chart"))
+            .header("Content-Type", "application/json")
+            .POST(HttpRequest.BodyPublishers.ofString("{\"chart\":" + compactChartJson + "}"))
+            .build();
+
+        // Send the request and receive the image as a byte[]
+        HttpClient client = HttpClient.newHttpClient();
+        byte[] png = client.send(req, HttpResponse.BodyHandlers.ofByteArray()).body();
+
+        // Save the returned image as a png
+        Files.write(Path.of("languagesStats.png"), png);
+    }
+
+    // Get the extension of a file
+    private static String getExtension(String file) {
+        int i = file.lastIndexOf('.');
+        return i == -1 ? "" : file.substring(i).toLowerCase();
+    }
+}
