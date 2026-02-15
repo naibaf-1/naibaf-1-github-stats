@@ -4,22 +4,47 @@ import java.net.http.*;
 import java.net.URI;
 
 public class languageStats {
-
     public static void main(String[] args) throws Exception {
+        // --------------------------------
+        // Variables, Lists, &c.
+        // --------------------------------
+        List<String> repoNames = new ArrayList<>();
+        List<String> repoUrls = new ArrayList<>();
+        Map<String, Integer> extensionCount = new HashMap<>();
+
+        // Organisations and users to scan
+        List<String> owners = List.of("naibaf-1", "CodeJudgeOrg");
+
+        // Repos to exclude
+        List<String> exclude = List.of("HexPatch");
+
+        // Map of languages, which will be displayed
+        Map<String, String> displayedLanguages = Map.ofEntries(
+            Map.entry(".dart", "Dart"),
+            Map.entry(".java", "Java"),
+            Map.entry(".c", "C"),
+            Map.entry(".h", "C")
+        );
+
+        // JSON structure which will be transmitted
+        String chartJson = """
+        {
+            "type": "pie",
+            "data": {
+                "labels": %s,
+                "datasets": [{ "data": %s }]
+            }
+        }
+        """;
+
+        // --------------------------------
+        // Actual logic
+        // --------------------------------
         String currentRepo = Path.of("").toAbsolutePath().getFileName().toString();
         System.out.println("Current repo: " + currentRepo);
 
         // Generate /repos
         Files.createDirectories(Path.of("repos"));
-
-        // Request all repositories of the user and CodeJudgeOrg
-        List<String> owners = List.of("naibaf-1", "CodeJudgeOrg");
-
-        List<String> repoNames = new ArrayList<>();
-        List<String> repoUrls = new ArrayList<>();
-
-        // Repos to exclude
-        List<String> exclude = List.of("HexPatch");
 
         // Fill the two lists with the name and the url of a repository for all owners
         for (String owner : owners) {
@@ -42,7 +67,6 @@ public class languageStats {
         }
 
         // Move through each repository and count the occurrences of the file extensions
-        Map<String, Integer> extensionCount = new HashMap<>();
         int repoCount = repoNames.size();
 
         for (int i = 0; i < repoCount; i++) {
@@ -87,14 +111,6 @@ public class languageStats {
             }
         }
 
-        // Map of supported languages
-        Map<String, String> displayedLanguages = Map.ofEntries(
-            Map.entry(".dart", "Dart"),
-            Map.entry(".java", "Java"),
-            Map.entry(".c", "C"),
-            Map.entry(".h", "C")
-        );
-
         // Get a Map with the name of the languages instead of the extensions
         Map<String, Integer> languageCount = new LinkedHashMap<>();
         for (var extension : extensionCount.entrySet()) {
@@ -118,38 +134,19 @@ public class languageStats {
         Files.writeString(Path.of("languageStats.json"), jsonOut.toString());
 
         // Convert labels to a JSON array
-        String labelsJson = languageCount.keySet().stream()
-                .map(s -> "\"" + s + "\"")
-                .reduce((a, b) -> a + "," + b)
-                .map(s -> "[" + s + "]")
-                .orElse("[]");
+        String labelsJson = languageCount.keySet().stream().map(s -> "\"" + s + "\"").reduce((a, b) -> a + "," + b).map(s -> "[" + s + "]").orElse("[]");
 
         // Convert values to a JSON array
-        String valuesJson = languageCount.values().stream()
-                .map(Object::toString)
-                .reduce((a, b) -> a + "," + b)
-                .map(s -> "[" + s + "]")
-                .orElse("[]");
+        String valuesJson = languageCount.values().stream().map(Object::toString).reduce((a, b) -> a + "," + b).map(s -> "[" + s + "]").orElse("[]");
 
-        // Create a JSON String for the chart
-        String chartJson = """
-        {
-            "type": "pie",
-            "data": {
-                "labels": %s,
-                "datasets": [{ "data": %s }]
-            }
-        }
-        """.formatted(labelsJson, valuesJson);
-
-        // Remove whitespace and spaces from the JSON
-        String compactChartJson = chartJson.replace("\n", "").replace("\r", "").replace(" ", "");
+        // Create a JSON String for the chart and remove whitespace and spaces from it
+        String compactDataJson = chartJson.formatted(labelsJson, valuesJson).replace("\n", "").replace("\r", "").replace(" ", "");
 
         // Create the request for the chart using the JSON String
         HttpRequest req = HttpRequest.newBuilder()
             .uri(URI.create("https://quickchart.io/chart"))
             .header("Content-Type", "application/json")
-            .POST(HttpRequest.BodyPublishers.ofString("{\"chart\":" + compactChartJson + "}"))
+            .POST(HttpRequest.BodyPublishers.ofString("{\"chart\":" + compactDataJson + "}"))
             .build();
 
         // Send the request and receive the image as a byte[]
