@@ -16,7 +16,7 @@ public class languageStats {
         List<String> owners = List.of("naibaf-1", "CodeJudgeOrg");
 
         // Repos to exclude
-        List<String> excludedRepos = List.of("HexPatch");
+        List<String> excludedRepos = List.of("HexPatch", "GNOME-Wallpaper-Collection");
 
         // Map of languages, which will be displayed
         Map<String, String> displayedLanguages = Map.ofEntries(
@@ -41,8 +41,17 @@ public class languageStats {
                 "labels": %s,
                 "datasets": [{
                     "data": %s,
-                    "backgroundColor": %s
+                    "backgroundColor": %s,
+                    "borderWidth": 0
                 }]
+            },
+            "options": {
+                "cutoutPercentage": 64,
+                "plugins": {
+                    "datalabels": {
+                        "display": false
+                    }
+                }
             }
         }
         """;
