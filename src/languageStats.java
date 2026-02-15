@@ -16,7 +16,7 @@ public class languageStats {
         List<String> owners = List.of("naibaf-1", "CodeJudgeOrg");
 
         // Repos to exclude
-        List<String> exclude = List.of("HexPatch");
+        List<String> excludedRepos = List.of("HexPatch");
 
         // Map of languages, which will be displayed
         Map<String, String> displayedLanguages = Map.ofEntries(
@@ -78,7 +78,7 @@ public class languageStats {
             }
 
             // Skip excluded repos
-            if (exclude.contains(name)) {
+            if (excludedRepos.contains(name)) {
                 continue;
             }
 
