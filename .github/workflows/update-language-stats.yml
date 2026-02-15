@@ -35,4 +35,5 @@ jobs:
           git config user.email "action@github.com"
           git add languageStats.png languageStats.json || true
           git commit -m "Update language stats" || echo "No changes"
-          git push https://$PAT@github.com/naibaf-1/naibaf-1-github-stats.git HEAD:main
+          git remote set-url origin https://$PAT@github.com/naibaf-1/naibaf-1-github-stats.git
+          git push origin HEAD:main
