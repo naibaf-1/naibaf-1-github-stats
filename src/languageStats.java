@@ -75,22 +75,65 @@ public class languageStats {
         // Generate /repos
         Files.createDirectories(Path.of("repos"));
 
-        // Fill the two lists with the name and the url of a repository for all owners
-        for (String owner : owners) {
-            // Request all repositories of an owner
-            Process process = new ProcessBuilder("gh", "repo", "list", owner, "--json", "name,sshUrl", "--limit", "200")
-                    .redirectErrorStream(true)
-                    .start();
-            String json = new String(process.getInputStream().readAllBytes());
-            process.waitFor();
+        // --------------------------------
+        // NEW: Load repositories via GitHub API (no GH CLI needed)
+        // --------------------------------
+        HttpClient http = HttpClient.newHttpClient();
 
-            // Fill the two lists with the name and the url of an repository
-            for (String entry : json.split("\\{")) {
-                if (entry.contains("sshUrl")) {
-                    String name = entry.split("\"name\":\"")[1].split("\"")[0];
-                    String url = entry.split("\"sshUrl\":\"")[1].split("\"")[0];
+        for (String owner : owners) {
+            List<String> urls = List.of(
+                "https://api.github.com/users/" + owner + "/repos?per_page=200",
+                "https://api.github.com/orgs/" + owner + "/repos?per_page=200"
+            );
+
+            for (String apiUrl : urls) {
+                HttpRequest req = HttpRequest.newBuilder()
+                    .uri(URI.create(apiUrl))
+                    .header("Accept", "application/vnd.github+json")
+                    .build();
+
+                String json = http.send(req, HttpResponse.BodyHandlers.ofString()).body();
+
+                // Extract each JSON object cleanly
+                String[] objects = json.split("\\},\\{");
+
+                for (String obj : objects) {
+
+                    // Normalize object boundaries
+                    obj = obj.replace("[{", "{")
+                             .replace("}]", "}")
+                             .replace("{", "")
+                             .replace("}", "");
+
+                    // Extract name
+                    String name = null;
+                    if (obj.contains("\"name\":")) {
+                        try {
+                            name = obj.split("\"name\":")[1]
+                                      .split(",")[0]
+                                      .replace("\"", "")
+                                      .trim();
+                        } catch (Exception ignored) {}
+                    }
+
+                    // Extract ssh_url
+                    String ssh = null;
+                    if (obj.contains("\"ssh_url\":")) {
+                        try {
+                            ssh = obj.split("\"ssh_url\":")[1]
+                                     .split(",")[0]
+                                     .replace("\"", "")
+                                     .trim();
+                        } catch (Exception ignored) {}
+                    }
+
+                    // Skip invalid entries
+                    if (name == null || ssh == null || name.isBlank() || ssh.isBlank() || ssh.equals("null")) {
+                        continue;
+                    }
+
                     repoNames.add(name);
-                    repoUrls.add(url);
+                    repoUrls.add(ssh);
                 }
             }
         }
@@ -163,16 +206,20 @@ public class languageStats {
         Files.writeString(Path.of("languageStats.json"), jsonOut.toString());
 
         // Convert labels to a JSON array
-        String labelsJSON = languageCount.keySet().stream().map(s -> "\"" + s + "\"").reduce((a, b) -> a + "," + b).map(s -> "[" + s + "]").orElse("[]");
+        String labelsJSON = languageCount.keySet().stream().map(s -> "\"" + s + "\"")
+                .reduce((a, b) -> a + "," + b).map(s -> "[" + s + "]").orElse("[]");
 
         // Convert values to a JSON array
-        String valuesJSON = languageCount.values().stream().map(Object::toString).reduce((a, b) -> a + "," + b).map(s -> "[" + s + "]").orElse("[]");
+        String valuesJSON = languageCount.values().stream().map(Object::toString)
+                .reduce((a, b) -> a + "," + b).map(s -> "[" + s + "]").orElse("[]");
 
         // Convert colors to a JSON array
-        String colorsJSON = languageCount.keySet().stream().map(lang -> "\"" + languageColor.get(lang) + "\"").reduce((a, b) -> a + "," + b).map(s -> "[" + s + "]").orElse("[]");
+        String colorsJSON = languageCount.keySet().stream().map(lang -> "\"" + languageColor.get(lang) + "\"")
+                .reduce((a, b) -> a + "," + b).map(s -> "[" + s + "]").orElse("[]");
 
         // Create a JSON String for the chart and remove whitespace and spaces from it
-        String compactDataJson = chartJSON.formatted(labelsJSON, valuesJSON, colorsJSON).replace("\n", "").replace("\r", "").replace(" ", "");
+        String compactDataJson = chartJSON.formatted(labelsJSON, valuesJSON, colorsJSON)
+                .replace("\n", "").replace("\r", "").replace(" ", "");
 
         // Create the request for the chart using the JSON String
         HttpRequest req = HttpRequest.newBuilder()
