@@ -28,6 +28,8 @@ jobs:
         run: java -cp src languageStats
 
       - name: Commit results
+        env:
+          PAT: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
         run: |
           git config user.name "GitHub Action"
           git config user.email "action@github.com"
