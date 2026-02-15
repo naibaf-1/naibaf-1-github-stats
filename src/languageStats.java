@@ -51,6 +51,16 @@ public class languageStats {
                     "datalabels": {
                         "display": false
                     }
+                },
+                "legend": {
+                    "display": true,
+                    "position": "left",
+                    "align": "start",
+                    "labels": {
+                        "fontSize": 24,
+                        "fontStyle": "bold",
+                        "padding": 18
+                    }
                 }
             }
         }
@@ -176,7 +186,7 @@ public class languageStats {
         byte[] png = client.send(req, HttpResponse.BodyHandlers.ofByteArray()).body();
 
         // Save the returned image as a png
-        Files.write(Path.of("languagesStats.png"), png);
+        Files.write(Path.of("languageStats.png"), png);
     }
 
     // Get the extension of a file
