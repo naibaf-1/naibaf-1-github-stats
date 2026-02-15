@@ -10,30 +10,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Checkout repository with PAT so push works
       - uses: actions/checkout@v3
         with:
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
-      - name: Install GitHub CLI
-        run: sudo apt-get update && sudo apt-get install -y gh
-
-      - name: Authenticate GitHub CLI
-        env:
-          GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-        run: echo "$GH_TOKEN" | gh auth login --with-token
-
+      # Set up Java
       - name: Set up Java
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: '21'
 
+      # Compile Java program
       - name: Compile
         run: javac src/languageStats.java
 
+      # Run Java program
       - name: Run analysis
         run: java -cp src languageStats
 
+      # Commit results
       - name: Commit results
         run: |
           git config user.name "GitHub Action"
