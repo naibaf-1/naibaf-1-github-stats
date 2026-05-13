@@ -175,7 +175,7 @@ public class languageStats {
                     String extension = getExtension(f.toString());
 
                     // Only count Java, C, Dart
-                    if (!extension.equals(".java") && !extension.equals(".dart") && !extension.equals(".c") && !extension.equals(".h")) {
+                    if (!extension.equals(".java") && !extension.equals(".dart") && !extension.equals(".c") && !extension.equals(".h") && !extension.equals(".py") {
                         return; // ignore everything else
                     }
 
