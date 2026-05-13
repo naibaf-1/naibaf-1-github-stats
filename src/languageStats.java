@@ -23,14 +23,16 @@ public class languageStats {
             Map.entry(".dart", "Dart"),
             Map.entry(".java", "Java"),
             Map.entry(".c", "C"),
-            Map.entry(".h", "C")
+            Map.entry(".h", "C"),
+            Map.entry(".py", "Python")
         );
 
         // Colors of the languages
         Map<String, String> languageColor = Map.of(
             "Dart", "#00B4AB",
             "Java", "#b07219",
-            "C", "#555555"
+            "C", "#555555",
+            "Python", "#3572A5"
         );
 
         // JSON structure which will be transmitted
@@ -76,7 +78,7 @@ public class languageStats {
         Files.createDirectories(Path.of("repos"));
 
         // --------------------------------
-        // NEW: Load repositories via GitHub API (no GH CLI needed)
+        // Load repositories via GitHub API (no GH CLI needed)
         // --------------------------------
         HttpClient http = HttpClient.newHttpClient();
 
