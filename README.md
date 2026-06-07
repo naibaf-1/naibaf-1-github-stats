@@ -5,7 +5,7 @@ Stats for my github profile.
 Modify the list `owners`.
 
 ## Add a new language
-Add a new entry to the Map `displayedLanguages` and don't exclude the new language in line 104 of `languageStats.java`.
+Add a new entry to the Map `displayedLanguages` and don't exclude the new language in line 104 of `languageStats.java`. Finally you have to add the color to the Map `languageColor`.
 
 ## Customize the color of a language
 Add a new entry to the Map `languageColor`.
