@@ -24,7 +24,8 @@ public class languageStats {
             Map.entry(".java", "Java"),
             Map.entry(".c", "C"),
             Map.entry(".h", "C"),
-            Map.entry(".py", "Python")
+            Map.entry(".py", "Python"),
+            Map.entry(".sh", "Shell")
         );
 
         // Colors of the languages
@@ -32,7 +33,8 @@ public class languageStats {
             "Dart", "#00B4AB",
             "Java", "#b07219",
             "C", "#555555",
-            "Python", "#3572A5"
+            "Python", "#3572A5",
+            "Shell", "#89e051"
         );
 
         // JSON structure which will be transmitted
@@ -175,7 +177,7 @@ public class languageStats {
                     String extension = getExtension(f.toString());
 
                     // Only count Java, C, Dart
-                    if (!extension.equals(".java") && !extension.equals(".dart") && !extension.equals(".c") && !extension.equals(".h") && !extension.equals(".py")) {
+                    if (!extension.equals(".java") && !extension.equals(".dart") && !extension.equals(".c") && !extension.equals(".h") && !extension.equals(".py") && !extension.equals(".sh")) {
                         return; // ignore everything else
                     }
 
