@@ -5,83 +5,53 @@ import java.net.URI;
 
 public class languageStats {
     public static void main(String[] args) throws Exception {
-        // --------------------------------
-        // Variables, Lists, &c.
-        // --------------------------------
-        List<String> repoNames = new ArrayList<>();
-        List<String> repoUrls = new ArrayList<>();
-        Map<String, Integer> extensionCount = new HashMap<>();
-
-        // Organisations and users to scan
+        // ----------------------------------------------------------------------------------------------
+        // Parameters
+        // ----------------------------------------------------------------------------------------------
         List<String> owners = List.of("naibaf-1", "CodeJudgeOrg");
-
-        // Repos to exclude
         List<String> excludedRepos = List.of("HexPatch", "GNOME-Wallpaper-Collection", "FreeDroidWarn");
-
-        // Map of languages, which will be displayed
-        Map<String, String> displayedLanguages = Map.ofEntries(
+        Map<String, String> allowedLanguages = Map.ofEntries(
             Map.entry(".dart", "Dart"),
             Map.entry(".java", "Java"),
             Map.entry(".c", "C"),
             Map.entry(".h", "C"),
             Map.entry(".py", "Python"),
-            Map.entry(".sh", "Shell")
+            Map.entry(".sh", "Bash")
         );
-
-        // Colors of the languages
-        Map<String, String> languageColor = Map.of(
+        Map<String, String> languageColors = Map.of(
             "Dart", "#00B4AB",
             "Java", "#b07219",
             "C", "#555555",
             "Python", "#3572A5",
             "Shell", "#89e051"
         );
-
-        // JSON structure which will be transmitted
-        String chartJSON = """
+        String transmittedChartJSON = """
         {
-            "type": "pie",
-            "data": {
-                "labels": %s,
-                "datasets": [{
-                    "data": %s,
-                    "backgroundColor": %s,
-                    "borderWidth": 0
-                }]
-            },
-            "options": {
-                "cutoutPercentage": 64,
-                "plugins": {
-                    "datalabels": {
-                        "display": false
-                    }
-                },
-                "legend": {
-                    "display": true,
-                    "position": "left",
-                    "align": "start",
-                    "labels": {
-                        "fontSize": 24,
-                        "fontStyle": "bold",
-                        "padding": 18
-                    }
-                }
-            }
+          "type": "pie",
+          "data": {"labels": %s, "datasets": [{"data": %s, "backgroundColor": %s, "borderWidth": 0}]},
+          "options": {
+            "cutoutPercentage": 64,
+            "plugins": {"datalabels": {"display": false}},
+            "legend": {"display": true,"position": "left","align": "start","labels": {"fontSize": 24,"fontStyle": "bold","padding": 18}}
+          }
         }
         """;
-
-        // --------------------------------
+    
+        // ----------------------------------------------------------------------------------------------
         // Actual logic
-        // --------------------------------
+        // ----------------------------------------------------------------------------------------------
+        // Variables
+        List<String> repoNames = new ArrayList<>();
+        List<String> repoUrls = new ArrayList<>();
+        Map<String, Integer> extensionCount = new HashMap<>();  
+        
         String currentRepo = Path.of("").toAbsolutePath().getFileName().toString();
         System.out.println("Current repo: " + currentRepo);
 
         // Generate /repos
         Files.createDirectories(Path.of("repos"));
 
-        // --------------------------------
-        // Load repositories via GitHub API (no GH CLI needed)
-        // --------------------------------
+        // Load repositories via GitHub API
         HttpClient http = HttpClient.newHttpClient();
 
         for (String owner : owners) {
@@ -90,9 +60,9 @@ public class languageStats {
                 "https://api.github.com/orgs/" + owner + "/repos?per_page=200"
             );
 
-            for (String apiUrl : urls) {
+            for (String url : urls) {
                 HttpRequest req = HttpRequest.newBuilder()
-                    .uri(URI.create(apiUrl))
+                    .uri(URI.create(url))
                     .header("Accept", "application/vnd.github+json")
                     .build();
 
@@ -100,16 +70,13 @@ public class languageStats {
 
                 // Extract each JSON object cleanly
                 String[] objects = json.split("\\},\\{");
-
                 for (String obj : objects) {
-
                     // Normalize object boundaries
                     obj = obj.replace("[{", "{")
                              .replace("}]", "}")
                              .replace("{", "")
                              .replace("}", "");
-
-                    // Extract name
+                    // Extract repository name
                     String name = null;
                     if (obj.contains("\"name\":")) {
                         try {
@@ -119,7 +86,6 @@ public class languageStats {
                                       .trim();
                         } catch (Exception ignored) {}
                     }
-
                     // Extract ssh_url
                     String ssh = null;
                     if (obj.contains("\"ssh_url\":")) {
@@ -130,12 +96,11 @@ public class languageStats {
                                      .trim();
                         } catch (Exception ignored) {}
                     }
-
                     // Skip invalid entries
                     if (name == null || ssh == null || name.isBlank() || ssh.isBlank() || ssh.equals("null")) {
                         continue;
                     }
-
+                    // Remember each repository name and its url
                     repoNames.add(name);
                     repoUrls.add(ssh);
                 }
@@ -144,7 +109,6 @@ public class languageStats {
 
         // Move through each repository and count the occurrences of the file extensions
         int repoCount = repoNames.size();
-
         for (int i = 0; i < repoCount; i++) {
             String name = repoNames.get(i);
 
@@ -152,12 +116,12 @@ public class languageStats {
             if (name.equals(currentRepo)) {
                 continue;
             }
-
-            // Skip excluded repos
+            // Skip excluded repositories
             if (excludedRepos.contains(name)) {
                 continue;
             }
 
+            // Get the correct url and path based on a repository name
             String url = repoUrls.get(i).replace("git@github.com:", "https://github.com/");
             String path = "repos/" + name;
 
@@ -190,7 +154,7 @@ public class languageStats {
         // Get a Map with the name of the languages instead of the extensions
         Map<String, Integer> languageCount = new LinkedHashMap<>();
         for (var extension : extensionCount.entrySet()) {
-            String language = displayedLanguages.get(extension.getKey());
+            String language = allowedLanguages.get(extension.getKey());
             if (language != null) {
                 languageCount.merge(language, extension.getValue(), Integer::sum);
             }
@@ -218,11 +182,11 @@ public class languageStats {
                 .reduce((a, b) -> a + "," + b).map(s -> "[" + s + "]").orElse("[]");
 
         // Convert colors to a JSON array
-        String colorsJSON = languageCount.keySet().stream().map(lang -> "\"" + languageColor.get(lang) + "\"")
+        String colorsJSON = languageCount.keySet().stream().map(lang -> "\"" + languageColors.get(lang) + "\"")
                 .reduce((a, b) -> a + "," + b).map(s -> "[" + s + "]").orElse("[]");
 
         // Create a JSON String for the chart and remove whitespace and spaces from it
-        String compactDataJson = chartJSON.formatted(labelsJSON, valuesJSON, colorsJSON)
+        String compactDataJson = transmittedChartJSON.formatted(labelsJSON, valuesJSON, colorsJSON)
                 .replace("\n", "").replace("\r", "").replace(" ", "");
 
         // Create the request for the chart using the JSON String
@@ -234,10 +198,10 @@ public class languageStats {
 
         // Send the request and receive the image as a byte[]
         HttpClient client = HttpClient.newHttpClient();
-        byte[] png = client.send(req, HttpResponse.BodyHandlers.ofByteArray()).body();
+        byte[] pngImage = client.send(req, HttpResponse.BodyHandlers.ofByteArray()).body();
 
         // Save the returned image as a png
-        Files.write(Path.of("languageStats.png"), png);
+        Files.write(Path.of("languageStats.png"), pngImage);
     }
 
     // Get the extension of a file
