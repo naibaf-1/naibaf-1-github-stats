@@ -125,7 +125,7 @@ public class languageStats {
             String repoName = repoNames.get(i);
 
             // Skip the repo that contains this script 
-            if (name.equals(currentRepo)) {
+            if (repoName.equals(currentRepo)) {
                 continue;
             }
             // Skip excluded repositories
