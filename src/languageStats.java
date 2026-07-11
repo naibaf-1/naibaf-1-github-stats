@@ -18,9 +18,11 @@ public class languageStats {
             Map.entry(".py", "Python"),
             Map.entry(".sh", "Bash"),
             Map.entry(".txt", "CMake"),
+            Map.entry(".cpp", "C++"),
+            Map.entry(".hpp", "C++")
         );
         Map<String, List<String>> allowedLanguagesByRepo = Map.ofEntries(
-            Map.entry("GroundsBot", List.of(".txt")),
+            Map.entry("GroundsBot", List.of(".txt", ".cpp", ".hpp")),
             Map.entry("ROS-TO-CMD", List.of(".sh")),
             Map.entry("Flutter-GlassKit", List.of(".dart")),
             Map.entry("GymTrim", List.of(".java")),
