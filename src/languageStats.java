@@ -139,10 +139,10 @@ public class languageStats {
             try (var stream = Files.walk(Path.of(path))) {
                 stream.filter(Files::isRegularFile).forEach(f -> {
                     String extension = getExtension(f.toString());
-
-                    // Only count Java, C, Dart
-                    if (!extension.equals(".java") && !extension.equals(".dart") && !extension.equals(".c") && !extension.equals(".h") && !extension.equals(".py") && !extension.equals(".sh")) {
-                        return; // ignore everything else
+                    
+                    // Return if the language isn't allowed
+                    if(!allowedLanguages.contains(extension)) {
+                      return;
                     }
 
                     // Find the extension key in the Map => Add 1 to the value
