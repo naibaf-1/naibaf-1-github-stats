@@ -9,7 +9,7 @@ public class languageStats {
         // Parameters
         // ----------------------------------------------------------------------------------------------
         List<String> owners = List.of("naibaf-1", "CodeJudgeOrg");
-        List<String> excludedRepos = List.of("HexPatch", "GNOME-Wallpaper-Collection", "FreeDroidWarn", "naibaf-1");
+        List<String> excludedRepos = List.of("HexPatch", "GNOME-Wallpaper-Collection", "FreeDroidWarn", "naibaf-1", ".github");
         Map<String, String> allowedLanguages = Map.ofEntries(
             Map.entry(".dart", "Dart"),
             Map.entry(".java", "Java"),
@@ -17,25 +17,25 @@ public class languageStats {
             Map.entry(".h", "C"),
             Map.entry(".py", "Python"),
             Map.entry(".sh", "Bash"),
-            Map.entry(".cmake", "CMake"),
+            Map.entry(".txt", "CMake"),
         );
         Map<String, List<String>> allowedLanguagesByRepo = Map.ofEntries(
-          Map.entry("naibaf-1-github-stats", List.of(".java")),
-          Map.entry("GroundsBot", List.of(".cmake")),
-          Map.entry("ROS-TO-CMD", List.of(".sh")),
-          Map.entry("Flutter-GlassKit", List.of(".dart")),
-          Map.entry("GymTrim", List.of(".java")),
-          Map.entry("CodeJudge-Student", List.of(".dart", ".c", ".h")),
-          Map.entry("CodeJudge-Teacher", List.of(".dart")),
-          Map.entry("CodeJudge-Library", List.of(".dart")),
-          Map.entry("CodeJudge-Server", List.of(".py"))
+            Map.entry("GroundsBot", List.of(".txt")),
+            Map.entry("ROS-TO-CMD", List.of(".sh")),
+            Map.entry("Flutter-GlassKit", List.of(".dart")),
+            Map.entry("GymTrim", List.of(".java")),
+            Map.entry("CodeJudge-Student", List.of(".dart", ".c", ".h")),
+            Map.entry("CodeJudge-Teacher", List.of(".dart")),
+            Map.entry("CodeJudge-Library", List.of(".dart")),
+            Map.entry("CodeJudge-Server", List.of(".py"))
         );
         Map<String, String> languageColors = Map.of(
             "Dart", "#00B4AB",
             "Java", "#b07219",
             "C", "#555555",
             "Python", "#3572A5",
-            "Bash", "#89e051"
+            "Bash", "#89e051",
+            "CMake", "#DA3434"
         );
         String transmittedChartJSON = """
         {
