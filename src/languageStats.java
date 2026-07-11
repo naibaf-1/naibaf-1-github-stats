@@ -158,7 +158,7 @@ public class languageStats {
                     List<String> allowedLanguagesForThisRepo = allowedLanguagesByRepo.get(repoName);
                     // Return if allowedLanguagesForThisRepo is null
                     if(allowedLanguagesForThisRepo == null) {
-                      System.out.println("Error: " + repoName + " (allowedLanguagesForThisRepo == null)");
+                      System.out.println("Skipping " + repoName + " (allowedLanguagesForThisRepo == null)");
                       return;
                     }
                     
