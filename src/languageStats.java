@@ -9,15 +9,27 @@ public class languageStats {
         // Parameters
         // ----------------------------------------------------------------------------------------------
         List<String> owners = List.of("naibaf-1", "CodeJudgeOrg");
-        List<String> excludedRepos = List.of("HexPatch", "GNOME-Wallpaper-Collection", "FreeDroidWarn");
+        List<String> excludedRepos = List.of("HexPatch", "GNOME-Wallpaper-Collection", "FreeDroidWarn", "naibaf-1");
         Map<String, String> allowedLanguages = Map.ofEntries(
             Map.entry(".dart", "Dart"),
             Map.entry(".java", "Java"),
             Map.entry(".c", "C"),
             Map.entry(".h", "C"),
             Map.entry(".py", "Python"),
-            Map.entry(".sh", "Bash")
+            Map.entry(".sh", "Bash"),
+            Map.entry(".cmake", "CMake"),
         );
+        Map<String, List<String>> allowedLanguagesByRepo = Map.ofEntries(
+          Map.entry("naibaf-1-github-stats", List.of(".java")),
+          Map.entry("GroundsBot", List.of(".cmake")),
+          Map.entry("ROS-TO-CMD", List.of(".sh")),
+          Map.entry("Flutter-GlassKit", List.of(".dart")),
+          Map.entry("GymTrim", List.of(".java")),
+          Map.entry("CodeJudge-Student", List.of(".dart", ".c", ".h")),
+          Map.entry("CodeJudge-Teacher", List.of(".dart")),
+          Map.entry("CodeJudge-Library", List.of(".dart")),
+          Map.entry("CodeJudge-Server", List.of(".py"))
+        )
         Map<String, String> languageColors = Map.of(
             "Dart", "#00B4AB",
             "Java", "#b07219",
@@ -110,20 +122,20 @@ public class languageStats {
         // Move through each repository and count the occurrences of the file extensions
         int repoCount = repoNames.size();
         for (int i = 0; i < repoCount; i++) {
-            String name = repoNames.get(i);
+            String repoName = repoNames.get(i);
 
             // Skip the repo that contains this script 
             if (name.equals(currentRepo)) {
                 continue;
             }
             // Skip excluded repositories
-            if (excludedRepos.contains(name)) {
+            if (excludedRepos.contains(repoName)) {
                 continue;
             }
 
             // Get the correct url and path based on a repository name
             String url = repoUrls.get(i).replace("git@github.com:", "https://github.com/");
-            String path = "repos/" + name;
+            String path = "repos/" + repoName;
 
             // Clone the repository
             Process clone = new ProcessBuilder("git", "clone", "--depth", "1", "--recursive", url, path).start();
@@ -131,7 +143,7 @@ public class languageStats {
 
             // Skip if the clone failed
             if (!Files.exists(Path.of(path))) {
-                System.out.println("Skipping " + name + " (clone failed)");
+                System.out.println("Skipping " + repoName + " (clone failed)");
                 continue;
             }
 
@@ -140,12 +152,19 @@ public class languageStats {
                 stream.filter(Files::isRegularFile).forEach(f -> {
                     String extension = getExtension(f.toString());
                     
-                    // Return if the language isn't allowed
-                    if(!allowedLanguages.contains(extension)) {
+                    // Get allowed languages by repo
+                    List<String> allowedLanguagesForThisRepo = allowedLanguagesByRepo.get(repoName);
+                    // Return if allowedLanguagesForThisRepo is null
+                    if(allowedLanguagesForThisRepo == null) {
+                      System.out.println("Error: " + repoName + " (allowedLanguagesForThisRepo == null)");
                       return;
                     }
-
-                    // Find the extension key in the Map => Add 1 to the value
+                    
+                    // Skip forbidden languages
+                    if(!allowedLanguagesForThisRepo.contains(extension)) {
+                      return;
+                    }
+                    // Handle allowed languages => Find the extension key in the Map => Add 1 to the value
                     extensionCount.merge(extension, 1, Integer::sum);
                 });
             }
