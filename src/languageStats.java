@@ -29,7 +29,7 @@ public class languageStats {
           Map.entry("CodeJudge-Teacher", List.of(".dart")),
           Map.entry("CodeJudge-Library", List.of(".dart")),
           Map.entry("CodeJudge-Server", List.of(".py"))
-        )
+        );
         Map<String, String> languageColors = Map.of(
             "Dart", "#00B4AB",
             "Java", "#b07219",
