@@ -23,7 +23,7 @@ public class languageStats {
             "Java", "#b07219",
             "C", "#555555",
             "Python", "#3572A5",
-            "Shell", "#89e051"
+            "Bash", "#89e051"
         );
         String transmittedChartJSON = """
         {
