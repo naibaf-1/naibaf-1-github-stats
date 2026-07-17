@@ -37,7 +37,8 @@ public class languageStats {
             "C", "#555555",
             "Python", "#3572A5",
             "Bash", "#89e051",
-            "CMake", "#DA3434"
+            "CMake", "#DA3434",
+            "C++", "#f34b7d"
         );
         String transmittedChartJSON = """
         {
